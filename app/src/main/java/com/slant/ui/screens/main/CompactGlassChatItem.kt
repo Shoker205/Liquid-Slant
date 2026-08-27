@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,8 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.slant.ui.theme.SlantAppStateManager
 import com.slant.ui.theme.SlantDimText
-import com.slant.ui.theme.SlantGlassBase
 import com.slant.ui.theme.SlantOledBlack
 import com.slant.ui.theme.SlantPureWhite
 import com.slant.ui.theme.liquidGlass
@@ -45,14 +46,20 @@ fun CompactGlassChatItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = SlantAppStateManager.isDark
+    val titleColor = if (isDark) SlantPureWhite else MaterialTheme.colorScheme.onBackground
+    val subtitleColor = if (isDark) SlantDimText else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+    val readCheckColor = if (isDark) SlantPureWhite else MaterialTheme.colorScheme.primary
+    val unreadBadgeBg = if (isDark) SlantPureWhite else MaterialTheme.colorScheme.primary
+    val unreadBadgeText = if (isDark) SlantOledBlack else MaterialTheme.colorScheme.onPrimary
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .liquidGlass(
                 shape = RoundedCornerShape(20.dp),
-                backgroundColor = SlantGlassBase,
-                alpha = 0.45f,
-                borderWidth = 0.5.dp
+                alpha = 0.55f,
+                borderWidth = 0.6.dp
             )
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp)
@@ -68,12 +75,12 @@ fun CompactGlassChatItem(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape)
-                    .background(Color(0x33FFFFFF)),
+                    .background(if (isDark) Color(0x33FFFFFF) else Color(0x1F000000)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = chat.avatarInitials,
-                    color = SlantPureWhite,
+                    color = titleColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -84,10 +91,10 @@ fun CompactGlassChatItem(
                     modifier = Modifier
                         .size(12.dp)
                         .clip(CircleShape)
-                        .background(SlantOledBlack)
+                        .background(if (isDark) SlantOledBlack else SlantPureWhite)
                         .padding(1.5.dp)
                         .clip(CircleShape)
-                        .background(if (chat.isMesh) Color(0xFF00E5FF) else SlantPureWhite)
+                        .background(if (chat.isMesh) Color(0xFF00E5FF) else titleColor)
                 )
             }
         }
@@ -110,7 +117,7 @@ fun CompactGlassChatItem(
                 ) {
                     Text(
                         text = chat.title,
-                        color = SlantPureWhite,
+                        color = titleColor,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.5.sp,
                         maxLines = 1,
@@ -121,7 +128,7 @@ fun CompactGlassChatItem(
                         Icon(
                             imageVector = Icons.Rounded.Lock,
                             contentDescription = "P2P",
-                            tint = SlantDimText,
+                            tint = subtitleColor,
                             modifier = Modifier.size(11.dp)
                         )
                     }
@@ -132,13 +139,13 @@ fun CompactGlassChatItem(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     when (chat.deliveryStatus) {
-                        DeliveryStatus.SENDING -> Icon(Icons.Rounded.Schedule, null, tint = SlantDimText, modifier = Modifier.size(12.dp))
-                        DeliveryStatus.SENT -> Icon(Icons.Rounded.Done, null, tint = SlantDimText, modifier = Modifier.size(12.dp))
-                        DeliveryStatus.READ -> Icon(Icons.Rounded.DoneAll, null, tint = SlantPureWhite, modifier = Modifier.size(12.dp))
+                        DeliveryStatus.SENDING -> Icon(Icons.Rounded.Schedule, null, tint = subtitleColor, modifier = Modifier.size(12.dp))
+                        DeliveryStatus.SENT -> Icon(Icons.Rounded.Done, null, tint = subtitleColor, modifier = Modifier.size(12.dp))
+                        DeliveryStatus.READ -> Icon(Icons.Rounded.DoneAll, null, tint = readCheckColor, modifier = Modifier.size(12.dp))
                     }
                     Text(
                         text = chat.timestamp,
-                        color = SlantDimText,
+                        color = subtitleColor,
                         fontSize = 11.sp
                     )
                 }
@@ -154,7 +161,7 @@ fun CompactGlassChatItem(
             ) {
                 Text(
                     text = chat.lastMessage,
-                    color = SlantDimText,
+                    color = subtitleColor,
                     fontSize = 13.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -169,7 +176,7 @@ fun CompactGlassChatItem(
                         Icon(
                             imageVector = Icons.Rounded.PushPin,
                             contentDescription = "Pinned",
-                            tint = SlantDimText,
+                            tint = subtitleColor,
                             modifier = Modifier.size(12.dp)
                         )
                     }
@@ -179,13 +186,13 @@ fun CompactGlassChatItem(
                             modifier = Modifier
                                 .height(18.dp)
                                 .clip(RoundedCornerShape(9.dp))
-                                .background(if (chat.isMuted) Color(0x33FFFFFF) else SlantPureWhite)
+                                .background(if (chat.isMuted) (if (isDark) Color(0x33FFFFFF) else Color(0x22000000)) else unreadBadgeBg)
                                 .padding(horizontal = 6.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = chat.unreadCount.toString(),
-                                color = if (chat.isMuted) SlantPureWhite else SlantOledBlack,
+                                color = if (chat.isMuted) titleColor else unreadBadgeText,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )

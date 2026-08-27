@@ -22,10 +22,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.FolderZip
 import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.WifiTethering
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -48,10 +51,14 @@ import androidx.compose.ui.unit.sp
 import com.slant.ui.components.LivingNeuralCanvas
 import com.slant.ui.components.NeuralState
 import com.slant.ui.screens.profile.GlassSettingTile
+import com.slant.ui.theme.SlantAppStateManager
 import com.slant.ui.theme.SlantDimText
-import com.slant.ui.theme.SlantGlassBase
+import com.slant.ui.theme.SlantLanguage
 import com.slant.ui.theme.SlantOledBlack
 import com.slant.ui.theme.SlantPureWhite
+import com.slant.ui.theme.SlantStrings
+import com.slant.ui.theme.SlantThemeMode
+import com.slant.ui.theme.SlantThemePalette
 import com.slant.ui.theme.liquidGlass
 
 @Composable
@@ -65,17 +72,25 @@ fun SettingsHubScreen(
     var dohRuDomain by remember { mutableStateOf(true) }
     var particleDensity by remember { mutableFloatStateOf(0.7f) }
 
+    val isDark = SlantAppStateManager.isDark
+    val currentLang = SlantAppStateManager.language.value
+    val currentMode = SlantAppStateManager.themeMode.value
+    val currentPalette = SlantAppStateManager.themePalette.value
+
+    val textColor = if (isDark) SlantPureWhite else MaterialTheme.colorScheme.onBackground
+    val dimColor = if (isDark) SlantDimText else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(SlantOledBlack)
+            .background(if (isDark) SlantOledBlack else MaterialTheme.colorScheme.background)
             .testTag("settings_hub_screen")
     ) {
         LivingNeuralCanvas(
             state = NeuralState.IDLE,
             modifier = Modifier
                 .fillMaxSize()
-                .alpha(0.15f)
+                .alpha(if (isDark) 0.15f else 0.06f)
                 .align(Alignment.Center)
         )
 
@@ -92,7 +107,6 @@ fun SettingsHubScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .liquidGlass(
                         shape = RoundedCornerShape(24.dp),
-                        backgroundColor = SlantGlassBase,
                         alpha = 0.65f,
                         borderWidth = 1.dp
                     )
@@ -105,14 +119,14 @@ fun SettingsHubScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back",
-                        tint = SlantPureWhite
+                        contentDescription = SlantStrings.back,
+                        tint = textColor
                     )
                 }
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "ПАРАМЕТРЫ СИСТЕМЫ",
-                    color = SlantPureWhite,
+                    text = SlantStrings.settings.uppercase(),
+                    color = textColor,
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.sp
@@ -125,15 +139,47 @@ fun SettingsHubScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Раздел: Сеть и «Белые списки»
+                // Раздел: Тема и Язык
                 item {
-                    SectionHeader("СЕТЬ И УСТОЙЧИВОСТЬ К БЛОКИРОВКАМ")
+                    SectionHeader(SlantStrings.appearanceTitle, dimColor)
                 }
 
                 item {
                     GlassSettingTile(
-                        title = "Автономная Mesh-сеть",
-                        subtitle = "Bluetooth Low Energy & Wi-Fi Direct без интернета",
+                        title = if (currentMode == SlantThemeMode.DARK) SlantStrings.themeNightTitle else SlantStrings.themeDayTitle,
+                        subtitle = "${SlantStrings.themeLabel}: ${if (currentMode == SlantThemeMode.DARK) SlantStrings.themeNight else SlantStrings.themeDay}",
+                        icon = Icons.Rounded.Palette,
+                        onClick = { SlantAppStateManager.toggleThemeMode() }
+                    )
+                }
+
+                item {
+                    GlassSettingTile(
+                        title = if (currentPalette == SlantThemePalette.MONOCHROME) SlantStrings.paletteMonoTitle else SlantStrings.paletteMonetTitle,
+                        subtitle = "${SlantStrings.paletteLabel}: ${if (currentPalette == SlantThemePalette.MONOCHROME) SlantStrings.paletteMono else SlantStrings.paletteMonet}",
+                        icon = Icons.Rounded.Palette,
+                        onClick = { SlantAppStateManager.toggleThemePalette() }
+                    )
+                }
+
+                item {
+                    GlassSettingTile(
+                        title = SlantStrings.languageTitle,
+                        subtitle = "${SlantStrings.languageLabel}: ${currentLang.nativeName}",
+                        icon = Icons.Rounded.Language,
+                        onClick = { SlantAppStateManager.toggleLanguage() }
+                    )
+                }
+
+                // Раздел: Сеть и «Белые списки»
+                item {
+                    SectionHeader(if (currentLang == SlantLanguage.RU) "СЕТЬ И УСТОЙЧИВОСТЬ К БЛОКИРОВКАМ" else "NETWORK & ANTI-CENSORSHIP", dimColor)
+                }
+
+                item {
+                    GlassSettingTile(
+                        title = if (currentLang == SlantLanguage.RU) "Автономная Mesh-сеть" else "Autonomous Mesh Network",
+                        subtitle = if (currentLang == SlantLanguage.RU) "BLE & Wi-Fi Direct без интернета" else "BLE & Wi-Fi Direct without internet",
                         icon = Icons.Rounded.Hub,
                         isChecked = meshEnabled,
                         onCheckedChange = { meshEnabled = it }
@@ -142,8 +188,8 @@ fun SettingsHubScreen(
 
                 item {
                     GlassSettingTile(
-                        title = "RU-Шлюз sl-me.ru",
-                        subtitle = "Маскировка сигнального трафика под доверенный сегмент",
+                        title = if (currentLang == SlantLanguage.RU) "RU-Шлюз sl-me.ru" else "RU Relay sl-me.ru",
+                        subtitle = if (currentLang == SlantLanguage.RU) "Маскировка трафика под доверенный сегмент" else "Masking traffic as trusted segment",
                         icon = Icons.Rounded.WifiTethering,
                         isChecked = dohRuDomain,
                         onCheckedChange = { dohRuDomain = it }
@@ -152,13 +198,13 @@ fun SettingsHubScreen(
 
                 // Раздел: Безопасность и хранилище
                 item {
-                    SectionHeader("БЕЗОПАСНОСТЬ И ХРАНИЛИЩЕ")
+                    SectionHeader(if (currentLang == SlantLanguage.RU) "БЕЗОПАСНОСТЬ И ХРАНИЛИЩЕ" else "SECURITY & STORAGE", dimColor)
                 }
 
                 item {
                     GlassSettingTile(
                         title = "Anti-Forensics & Smart Cache",
-                        subtitle = "Защита ОЗУ, SQLCipher базы и Panic PIN",
+                        subtitle = if (currentLang == SlantLanguage.RU) "Защита ОЗУ, SQLCipher базы и Panic PIN" else "RAM protection, SQLCipher & Panic PIN",
                         icon = Icons.Rounded.Security,
                         onClick = onNavigateToSecurity
                     )
@@ -166,8 +212,8 @@ fun SettingsHubScreen(
 
                 item {
                     GlassSettingTile(
-                        title = "Экспорт сессионных ключей",
-                        subtitle = "Резервная зашифрованная копия ключей узла",
+                        title = if (currentLang == SlantLanguage.RU) "Экспорт сессионных ключей" else "Export Session Keys",
+                        subtitle = if (currentLang == SlantLanguage.RU) "Резервная зашифрованная копия ключей узла" else "Encrypted backup of node keys",
                         icon = Icons.Rounded.FolderZip,
                         onClick = {}
                     )
@@ -175,14 +221,14 @@ fun SettingsHubScreen(
 
                 // Раздел: Графический движок
                 item {
-                    SectionHeader("ГРАФИЧЕСКИЙ ДВИЖОК NEURAL FLUID")
+                    SectionHeader(if (currentLang == SlantLanguage.RU) "ГРАФИЧЕСКИЙ ДВИЖОК NEURAL FLUID" else "NEURAL FLUID GRAPHICS ENGINE", dimColor)
                 }
 
                 item {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .liquidGlass(RoundedCornerShape(20.dp), backgroundColor = SlantGlassBase, alpha = 0.55f)
+                            .liquidGlass(RoundedCornerShape(20.dp), alpha = 0.55f)
                             .padding(16.dp)
                     ) {
                         Row(
@@ -190,16 +236,21 @@ fun SettingsHubScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Плотность частиц на фоне", color = SlantPureWhite, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
-                            Text("${(particleDensity * 100).toInt()}%", color = SlantDimText, fontSize = 12.sp)
+                            Text(
+                                text = if (currentLang == SlantLanguage.RU) "Плотность частиц на фоне" else "Background particle density",
+                                color = textColor,
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text("${(particleDensity * 100).toInt()}%", color = dimColor, fontSize = 12.sp)
                         }
                         Slider(
                             value = particleDensity,
                             onValueChange = { particleDensity = it },
                             colors = SliderDefaults.colors(
-                                thumbColor = SlantPureWhite,
-                                activeTrackColor = SlantPureWhite,
-                                inactiveTrackColor = Color(0x33FFFFFF)
+                                thumbColor = if (isDark) SlantPureWhite else MaterialTheme.colorScheme.primary,
+                                activeTrackColor = if (isDark) SlantPureWhite else MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = if (isDark) Color(0x33FFFFFF) else Color(0x22000000)
                             ),
                             modifier = Modifier.testTag("particle_density_slider")
                         )
@@ -208,27 +259,27 @@ fun SettingsHubScreen(
 
                 // Раздел: О проекте
                 item {
-                    SectionHeader("О СИСТЕМЕ SLANT")
+                    SectionHeader(if (currentLang == SlantLanguage.RU) "О СИСТЕМЕ SLANT" else "ABOUT SLANT SYSTEM", dimColor)
                 }
 
                 item {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .liquidGlass(RoundedCornerShape(24.dp), backgroundColor = SlantGlassBase, alpha = 0.65f)
+                            .liquidGlass(RoundedCornerShape(24.dp), alpha = 0.65f)
                             .padding(18.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             text = "SLANT PROTOCOL V2.0",
-                            color = SlantPureWhite,
+                            color = textColor,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 2.sp
                         )
                         Text(
-                            text = "Архитектура нулевого доверия (Zero-Knowledge)",
-                            color = SlantDimText,
+                            text = if (currentLang == SlantLanguage.RU) "Архитектура нулевого доверия (Zero-Knowledge)" else "Zero-Knowledge Architecture",
+                            color = dimColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -238,7 +289,7 @@ fun SettingsHubScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0x22FFFFFF))
+                                .background(if (isDark) Color(0x22FFFFFF) else MaterialTheme.colorScheme.primaryContainer)
                                 .clickable {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://blog.sl-me.online"))
                                     context.startActivity(intent)
@@ -248,7 +299,7 @@ fun SettingsHubScreen(
                         ) {
                             Text(
                                 text = "SlantTech Hub: blog.sl-me.online",
-                                color = SlantPureWhite,
+                                color = textColor,
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -263,10 +314,10 @@ fun SettingsHubScreen(
 }
 
 @Composable
-private fun SectionHeader(title: String) {
+private fun SectionHeader(title: String, color: Color) {
     Text(
         text = title,
-        color = SlantDimText,
+        color = color,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.5.sp,

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.slant.ui.theme.SlantAppStateManager
 import com.slant.ui.theme.SlantDimText
 import com.slant.ui.theme.SlantGlassBase
 import com.slant.ui.theme.SlantOledBlack
@@ -47,16 +49,15 @@ fun LiquidCapsuleDock(
 ) {
     val view = LocalView.current
     val sections = MainDockSection.entries.toTypedArray()
-    val selectedIndex = sections.indexOf(currentSection)
+    val selectedIndex = sections.indexOf(currentSection).coerceAtLeast(0)
     val density = LocalDensity.current
 
     val animatedIndex = remember { Animatable(selectedIndex.toFloat()) }
     val dropletStretch = remember { Animatable(1f) }
 
     LaunchedEffect(selectedIndex) {
-        // Динамическое гидродинамическое сжатие при переключении
         dropletStretch.animateTo(
-            targetValue = 1.35f,
+            targetValue = 1.25f,
             animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessHigh)
         )
         dropletStretch.animateTo(
@@ -75,18 +76,31 @@ fun LiquidCapsuleDock(
         )
     }
 
+    val isDark = SlantAppStateManager.isDark
+    val isMonet = SlantAppStateManager.isMonet
+    val activePillColor = when {
+        isMonet -> MaterialTheme.colorScheme.primary
+        isDark -> SlantPureWhite
+        else -> SlantOledBlack
+    }
+    val activeIconColor = when {
+        isMonet -> MaterialTheme.colorScheme.onPrimary
+        isDark -> SlantOledBlack
+        else -> SlantPureWhite
+    }
+    val inactiveIconColor = if (isDark) SlantDimText else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp)
-            .height(64.dp)
+            .padding(horizontal = 42.dp, vertical = 6.dp)
+            .height(50.dp)
             .liquidGlass(
-                shape = RoundedCornerShape(32.dp),
-                backgroundColor = SlantGlassBase,
-                alpha = 0.75f,
+                shape = RoundedCornerShape(25.dp),
+                alpha = 0.80f,
                 borderWidth = 1.dp
             )
-            .padding(horizontal = 6.dp, vertical = 6.dp)
+            .padding(horizontal = 4.dp, vertical = 4.dp)
             .testTag("liquid_capsule_dock"),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -96,9 +110,9 @@ fun LiquidCapsuleDock(
             val itemWidthDp = maxWidth / sections.size
 
             val currentOffsetPx = animatedIndex.value * itemWidthPx
-            val indicatorWidthDp = itemWidthDp * dropletStretch.value
+            val indicatorWidthDp = (itemWidthDp * dropletStretch.value).coerceAtMost(itemWidthDp * 1.3f)
 
-            // Жидкая капля-индикатор (White Liquid Droplet)
+            // Жидкая капля-индикатор
             Box(
                 modifier = Modifier
                     .offset {
@@ -107,8 +121,8 @@ fun LiquidCapsuleDock(
                     }
                     .width(indicatorWidthDp)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(26.dp))
-                    .background(SlantPureWhite)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(activePillColor)
             )
 
             // Кнопки разделов
@@ -139,9 +153,9 @@ fun LiquidCapsuleDock(
                     ) {
                         Icon(
                             imageVector = section.icon,
-                            contentDescription = section.title,
-                            tint = if (isSelected) SlantOledBlack else SlantDimText,
-                            modifier = Modifier.size(22.dp)
+                            contentDescription = section.localizedTitle,
+                            tint = if (isSelected) activeIconColor else inactiveIconColor,
+                            modifier = Modifier.size(19.dp)
                         )
                     }
                 }

@@ -8,12 +8,19 @@ import androidx.compose.material.icons.rounded.PersonOutline
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.ui.graphics.vector.ImageVector
 
-enum class MainDockSection(val title: String, val icon: ImageVector) {
+enum class MainDockSection(val defaultTitle: String, val icon: ImageVector) {
     CHATS("Чаты", Icons.Rounded.ChatBubbleOutline),
     GROUPS("Группы", Icons.Rounded.Forum),
     CHANNELS("Каналы", Icons.Rounded.GraphicEq),
-    BOTS("Боты", Icons.Rounded.SmartToy),
-    PROFILE("Профиль", Icons.Rounded.PersonOutline)
+    BOTS("Боты", Icons.Rounded.SmartToy);
+
+    val localizedTitle: String
+        get() = when (this) {
+            CHATS -> com.slant.ui.theme.SlantStrings.dockChats
+            GROUPS -> com.slant.ui.theme.SlantStrings.dockGroups
+            CHANNELS -> com.slant.ui.theme.SlantStrings.dockChannels
+            BOTS -> com.slant.ui.theme.SlantStrings.dockBots
+        }
 }
 
 enum class DeliveryStatus {

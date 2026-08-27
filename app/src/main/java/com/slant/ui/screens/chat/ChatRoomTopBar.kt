@@ -43,6 +43,9 @@ fun ChatRoomTopBar(
     verificationEmojis: List<String>,
     onBackClick: () -> Unit,
     onVerifyKeysClick: () -> Unit,
+    onPeerClick: () -> Unit = {},
+    onCallClick: () -> Unit = {},
+    onMoreOptionsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -62,7 +65,9 @@ fun ChatRoomTopBar(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onPeerClick() }
         ) {
             IconButton(
                 onClick = onBackClick,
@@ -143,7 +148,7 @@ fun ChatRoomTopBar(
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(
-                onClick = {},
+                onClick = onCallClick,
                 modifier = Modifier
                     .size(36.dp)
                     .testTag("encrypted_call_button")
@@ -156,7 +161,7 @@ fun ChatRoomTopBar(
                 )
             }
             IconButton(
-                onClick = {},
+                onClick = onMoreOptionsClick,
                 modifier = Modifier
                     .size(36.dp)
                     .testTag("chat_more_options_button")

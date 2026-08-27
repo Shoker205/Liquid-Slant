@@ -15,7 +15,9 @@ class MainActivity : ComponentActivity() {
         
         enableEdgeToEdge()
         setContent {
-            SlantTheme(darkTheme = true) {
+            val isDark = com.slant.ui.theme.SlantAppStateManager.isDark
+            val palette = com.slant.ui.theme.SlantAppStateManager.themePalette.value
+            SlantTheme(darkTheme = isDark, palette = palette) {
                 SlantNavHost(modifier = Modifier.fillMaxSize())
             }
         }

@@ -1,6 +1,8 @@
 package com.slant.ui.screens.chat
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,9 +42,12 @@ import com.slant.ui.theme.SlantOledBlack
 import com.slant.ui.theme.SlantPureWhite
 import com.slant.ui.theme.liquidGlass
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GlassMessageBubble(
     message: SlantMessage,
+    onFileClick: ((FileAttachment) -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val bubbleShape = if (message.isOutgoing) {
@@ -78,6 +83,14 @@ fun GlassMessageBubble(
                     alpha = if (message.isOutgoing) 0.60f else 0.45f,
                     borderWidth = 0.5.dp
                 )
+                .combinedClickable(
+                    onClick = {
+                        if (message.fileAttachment != null) {
+                            onFileClick?.invoke(message.fileAttachment)
+                        }
+                    },
+                    onLongClick = onLongClick
+                )
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             when (message.messageType) {
@@ -94,7 +107,12 @@ fun GlassMessageBubble(
                     VoiceMessagePlayerContent(voice = message.voiceAttachment)
                 }
                 MessageType.FILE -> {
-                    FileAttachmentContent(file = message.fileAttachment)
+                    FileAttachmentContent(
+                        file = message.fileAttachment,
+                        onClick = {
+                            message.fileAttachment?.let { onFileClick?.invoke(it) }
+                        }
+                    )
                 }
             }
 
@@ -188,12 +206,17 @@ private fun VoiceMessagePlayerContent(voice: VoiceAttachment?) {
 }
 
 @Composable
-private fun FileAttachmentContent(file: FileAttachment?) {
+private fun FileAttachmentContent(
+    file: FileAttachment?,
+    onClick: (() -> Unit)? = null
+) {
     if (file == null) return
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
     ) {
         Box(
             modifier = Modifier

@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.slant.ui.screens.auth.AuthScreen
 import com.slant.ui.screens.chat.ChatRoomScreen
+import com.slant.ui.screens.chat.FileAttachment
 import com.slant.ui.screens.chat.MessageType
 import com.slant.ui.screens.chat.SlantMessage
 import com.slant.ui.screens.chat.VoiceAttachment
@@ -26,20 +27,35 @@ import com.slant.ui.screens.main.SlantChatItem
 import com.slant.ui.screens.main.SlantMainScreen
 import com.slant.ui.screens.group.GroupChannelInfoScreen
 import com.slant.ui.screens.group.GroupMember
+import com.slant.ui.screens.group.SlantGroupChatScreen
+import com.slant.ui.screens.channel.SlantChannelScreen
 import com.slant.ui.screens.media.MediaViewerScreen
 import com.slant.ui.screens.notes.SavedNotesScreen
 import com.slant.ui.screens.search.SearchScreen
 import com.slant.ui.screens.call.CallType
 import com.slant.ui.screens.call.SecureCallScreen
+import com.slant.ui.screens.folders.ChatFoldersManagementScreen
 import com.slant.ui.screens.profile.PeerProfileScreen
 import com.slant.ui.screens.profile.ProfileSecurityScreen
+import com.slant.ui.screens.profile.SlantTelegramProfileScreen
+import com.slant.ui.screens.settings.AccountIdentityScreen
+import com.slant.ui.screens.settings.ActiveSessionsDevicesScreen
+import com.slant.ui.screens.settings.AppearanceSettingsScreen
+import com.slant.ui.screens.settings.ChatSettingsScreen
+import com.slant.ui.screens.settings.CustomProfileScreen
+import com.slant.ui.screens.settings.LanguageSelectionScreen
+import com.slant.ui.screens.settings.NodesRelaysScreen
+import com.slant.ui.screens.settings.NotificationsSettingsScreen
+import com.slant.ui.screens.settings.PowerSavingScreen
+import com.slant.ui.screens.settings.ProtocolHelpFaqScreen
 import com.slant.ui.screens.settings.SettingsHubScreen
+import com.slant.ui.screens.settings.SlantTechSettingsScreen
 
 @Composable
 fun SlantNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Auth.route
+    startDestination: String = Screen.Main.route
 ) {
     val context = LocalContext.current
 
@@ -58,20 +74,39 @@ fun SlantNavHost(
             ),
             SlantChatItem(
                 id = "node_02",
-                title = "Mesh_Local_Cluster",
-                lastMessage = "Пакет ретранслирован через 3 хопа.",
-                timestamp = "03:45",
-                unreadCount = 0,
+                title = "Zero-Knowledge Clan",
+                lastMessage = "cypher_root: Zero-RAM footprint подтвержден",
+                timestamp = "14:14",
+                unreadCount = 3,
                 isMesh = true,
                 meshHopCount = 3,
                 deliveryStatus = DeliveryStatus.SENT
             ),
             SlantChatItem(
-                id = "node_03",
-                title = "CipherVault Core",
-                lastMessage = "Байт-в-байт файл (142 MB) доставлен в хранилище.",
+                id = "saved_notes",
+                title = "Избранное / Vault",
+                lastMessage = "🔒 12 зашифрованных заметок и seed-фрагментов",
                 timestamp = "Вчера",
                 unreadCount = 0,
+                isPinned = true,
+                deliveryStatus = DeliveryStatus.READ,
+                isP2PDirect = false
+            ),
+            SlantChatItem(
+                id = "bot_01",
+                title = "Neural Agent Cortex",
+                lastMessage = "Модель Zero-RAM активирована. Готов к обработке.",
+                timestamp = "12:30",
+                unreadCount = 0,
+                deliveryStatus = DeliveryStatus.READ,
+                isP2PDirect = true
+            ),
+            SlantChatItem(
+                id = "channel_01",
+                title = "SlantTech Core Releases",
+                lastMessage = "🚀 Релиз v3.2.0: Liquid Glass + Zero-RAM архитектура",
+                timestamp = "14:20",
+                unreadCount = 1,
                 deliveryStatus = DeliveryStatus.READ,
                 isP2PDirect = false
             )
@@ -109,6 +144,20 @@ fun SlantNavHost(
                     waveformAmplitudes = listOf(0.2f, 0.5f, 0.8f, 0.4f, 0.9f, 0.6f, 0.3f, 0.7f, 0.5f, 0.8f, 0.3f, 0.6f, 0.9f, 0.4f, 0.2f, 0.7f, 0.5f, 0.8f)
                 ),
                 ratchetStep = 13
+            ),
+            SlantMessage(
+                id = "m4",
+                senderId = "peer",
+                timestamp = "04:13",
+                isOutgoing = false,
+                messageType = MessageType.FILE,
+                fileAttachment = FileAttachment(
+                    fileName = "quantum_telemetry.raw",
+                    fileSizeFormatted = "8.4 MB",
+                    mimeType = "image/raw",
+                    isRawByteUncompressed = true
+                ),
+                ratchetStep = 14
             )
         )
     }
@@ -133,18 +182,57 @@ fun SlantNavHost(
             )
         }
 
-        // 2. Главный экран (Диалоги + Докбар)
+        // 2. Главный экран (Диалоги + Докбар + Quick Access Hub)
         composable(Screen.Main.route) {
             SlantMainScreen(
                 chats = mockChats,
                 onChatClick = { chat ->
-                    navController.navigate(Screen.ChatRoom.createRoute(chat.id, chat.title))
+                    when {
+                        chat.id.startsWith("channel") || chat.title.contains("Broadcast") || chat.title.contains("Channel") -> {
+                            navController.navigate(Screen.Channel.createRoute(chat.id, chat.title))
+                        }
+                        chat.isMesh || chat.title.contains("Clan") || chat.title.contains("Cluster") || chat.title.contains("Group") -> {
+                            navController.navigate(Screen.GroupChat.createRoute(chat.id, chat.title))
+                        }
+                        chat.id == "saved_notes" -> {
+                            navController.navigate(Screen.SavedNotes.route)
+                        }
+                        else -> {
+                            navController.navigate(Screen.ChatRoom.createRoute(chat.id, chat.title))
+                        }
+                    }
                 },
                 onProfileClick = {
                     navController.navigate(Screen.Profile.route)
                 },
                 onQrScanClick = {
                     Toast.makeText(context, "Сканер открытых ключей активен", Toast.LENGTH_SHORT).show()
+                },
+                onSearchClick = {
+                    navController.navigate(Screen.Search.route)
+                },
+                onSavedNotesClick = {
+                    navController.navigate(Screen.SavedNotes.route)
+                },
+                onGroupInfoClick = { title ->
+                    navController.navigate(Screen.GroupInfo.createRoute(title))
+                },
+                onMediaViewerClick = {
+                    navController.navigate(
+                        Screen.MediaViewer.createRoute("sat_telemetry_scan.raw", "8.4 MB", "0xGhost_Relay")
+                    )
+                },
+                onCallClick = {
+                    navController.navigate(Screen.SecureCall.createRoute("0xGhost_Relay", "AUDIO"))
+                },
+                onSettingsClick = {
+                    navController.navigate(Screen.SettingsHub.route)
+                },
+                onAuthClick = {
+                    navController.navigate(Screen.Auth.route)
+                },
+                onOpenFoldersManagement = {
+                    navController.navigate(Screen.ChatFolders.route)
                 }
             )
         }
@@ -176,6 +264,58 @@ fun SlantNavHost(
                             ratchetStep = mockMessages.size + 1
                         )
                     )
+                },
+                onSendFileAttachment = { file ->
+                    mockMessages.add(
+                        0,
+                        SlantMessage(
+                            id = "m_${System.currentTimeMillis()}",
+                            senderId = "me",
+                            timestamp = "04:15",
+                            isOutgoing = true,
+                            messageType = MessageType.FILE,
+                            fileAttachment = file,
+                            deliveryStatus = DeliveryStatus.SENT,
+                            ratchetStep = mockMessages.size + 1
+                        )
+                    )
+                },
+                onSendVoiceMessage = { duration ->
+                    mockMessages.add(
+                        0,
+                        SlantMessage(
+                            id = "m_${System.currentTimeMillis()}",
+                            senderId = "me",
+                            timestamp = "04:15",
+                            isOutgoing = true,
+                            messageType = MessageType.VOICE,
+                            voiceAttachment = VoiceAttachment(
+                                durationSeconds = duration,
+                                waveformAmplitudes = listOf(0.3f, 0.6f, 0.9f, 0.4f, 0.8f, 0.5f, 0.7f, 0.3f, 0.9f, 0.6f)
+                            ),
+                            deliveryStatus = DeliveryStatus.SENT,
+                            ratchetStep = mockMessages.size + 1
+                        )
+                    )
+                },
+                onDeleteMessage = { idToDelete ->
+                    mockMessages.removeAll { it.id == idToDelete }
+                },
+                onPeerInfoClick = {
+                    if (peerName.contains("Clan") || peerName.contains("Cluster")) {
+                        navController.navigate(Screen.GroupInfo.createRoute(peerName))
+                    } else {
+                        navController.navigate(Screen.PeerProfile.createRoute(peerName, "ghost_relay"))
+                    }
+                },
+                onVerifyKeysClick = {
+                    navController.navigate(Screen.PeerProfile.createRoute(peerName, "ghost_relay"))
+                },
+                onCallClick = {
+                    navController.navigate(Screen.SecureCall.createRoute(peerName, "AUDIO"))
+                },
+                onOpenFileViewer = { fileName, fileSize, sender ->
+                    navController.navigate(Screen.MediaViewer.createRoute(fileName, fileSize, sender))
                 }
             )
         }
@@ -238,8 +378,59 @@ fun SlantNavHost(
             )
         }
 
-        // 7. Экран профиля и Anti-Forensics
+        // 7. Экран профиля в стиле Telegram / AyuGram
         composable(Screen.Profile.route) {
+            SlantTelegramProfileScreen(
+                displayName = "dmiTry",
+                username = "shoker0215",
+                cryptoId = "slant_ed25519_99a8b7c6...",
+                onNavigateToSlantTech = {
+                    navController.navigate(Screen.SlantTechSettings.route)
+                },
+                onNavigateToAppearance = {
+                    navController.navigate(Screen.Appearance.route)
+                },
+                onNavigateToCustomProfile = {
+                    navController.navigate(Screen.CustomProfile.route)
+                },
+                onNavigateToNodes = {
+                    navController.navigate(Screen.NodesRelays.route)
+                },
+                onNavigateToAccount = {
+                    navController.navigate(Screen.AccountIdentity.route)
+                },
+                onNavigateToChatSettings = {
+                    navController.navigate(Screen.ChatSettings.route)
+                },
+                onNavigateToSecurity = {
+                    navController.navigate(Screen.Security.route)
+                },
+                onNavigateToNotifications = {
+                    navController.navigate(Screen.NotificationsSettings.route)
+                },
+                onNavigateToStorage = {
+                    Toast.makeText(context, "Хранилище: Кэш зашифрован (Smart Cache)", Toast.LENGTH_SHORT).show()
+                },
+                onNavigateToFolders = {
+                    navController.navigate(Screen.ChatFolders.route)
+                },
+                onNavigateToDevices = {
+                    navController.navigate(Screen.ActiveSessionsDevices.route)
+                },
+                onNavigateToPowerSaving = {
+                    navController.navigate(Screen.PowerSaving.route)
+                },
+                onNavigateToLanguage = {
+                    navController.navigate(Screen.LanguageSelection.route)
+                },
+                onNavigateToFaq = {
+                    navController.navigate(Screen.ProtocolHelpFaq.route)
+                }
+            )
+        }
+
+        // 7b. Экран Anti-Forensics & Безопасности
+        composable(Screen.Security.route) {
             ProfileSecurityScreen(
                 publicKey = "slant_ed25519_99a8b7c6d5e4f3a210fedcba98765432",
                 onBackClick = { navController.popBackStack() },
@@ -251,6 +442,90 @@ fun SlantNavHost(
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // 7c. Экран управления и создания папок чатов
+        composable(Screen.ChatFolders.route) {
+            ChatFoldersManagementScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7d. Настройки SlantTech
+        composable(Screen.SlantTechSettings.route) {
+            SlantTechSettingsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7d2. Оформление и темы
+        composable(Screen.Appearance.route) {
+            AppearanceSettingsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7e. Кастомизация профиля
+        composable(Screen.CustomProfile.route) {
+            CustomProfileScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7f. Узлы и ретрансляторы
+        composable(Screen.NodesRelays.route) {
+            NodesRelaysScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7g. Аккаунт и личность
+        composable(Screen.AccountIdentity.route) {
+            AccountIdentityScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7h. Настройки чатов
+        composable(Screen.ChatSettings.route) {
+            ChatSettingsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7i. Уведомления
+        composable(Screen.NotificationsSettings.route) {
+            NotificationsSettingsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7j. Устройства и активные сессии
+        composable(Screen.ActiveSessionsDevices.route) {
+            ActiveSessionsDevicesScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7k. Энергосбережение
+        composable(Screen.PowerSaving.route) {
+            PowerSavingScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7l. Язык интерфейса
+        composable(Screen.LanguageSelection.route) {
+            LanguageSelectionScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // 7m. Протокол и FAQ
+        composable(Screen.ProtocolHelpFaq.route) {
+            ProtocolHelpFaqScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
 
@@ -323,6 +598,53 @@ fun SlantNavHost(
                 onDeleteLocally = {
                     Toast.makeText(context, "Медиафайл удален из ОЗУ и кэша", Toast.LENGTH_SHORT).show()
                     navController.popBackStack()
+                }
+            )
+        }
+
+        // 12. Симуляция канала обновлений SlantTech (Channel Simulation)
+        composable(
+            route = Screen.Channel.route,
+            arguments = listOf(
+                navArgument("channelId") { type = NavType.StringType },
+                navArgument("channelTitle") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val channelTitle = backStackEntry.arguments?.getString("channelTitle") ?: "SlantTech Core Releases"
+            SlantChannelScreen(
+                channelTitle = channelTitle,
+                subscriberCount = "24,850 узлов",
+                onBackClick = { navController.popBackStack() },
+                onOpenCommentsClick = {
+                    navController.navigate(Screen.GroupChat.createRoute("channel_comments", "$channelTitle • Кластер"))
+                },
+                onChannelInfoClick = {
+                    navController.navigate(Screen.GroupInfo.createRoute(channelTitle))
+                }
+            )
+        }
+
+        // 13. Симуляция группового чата (Mesh Cluster Simulation)
+        composable(
+            route = Screen.GroupChat.route,
+            arguments = listOf(
+                navArgument("groupId") { type = NavType.StringType },
+                navArgument("groupTitle") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val groupTitle = backStackEntry.arguments?.getString("groupTitle") ?: "Zero-Knowledge Clan"
+            SlantGroupChatScreen(
+                groupTitle = groupTitle,
+                membersInfo = "48 узлов в сети • 12 онлайн",
+                onBackClick = { navController.popBackStack() },
+                onGroupInfoClick = {
+                    navController.navigate(Screen.GroupInfo.createRoute(groupTitle))
+                },
+                onCallClick = {
+                    navController.navigate(Screen.SecureCall.createRoute(groupTitle, "AUDIO"))
+                },
+                onOpenFileViewer = { fileName, fileSize, sender ->
+                    navController.navigate(Screen.MediaViewer.createRoute(fileName, fileSize, sender))
                 }
             )
         }
